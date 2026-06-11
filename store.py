@@ -71,7 +71,7 @@ class WinDepotModern:
     def setup_navigation_bar(self):
         self.nav_frame = ctk.CTkFrame(self.root, corner_radius=10)
         self.nav_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ew")
-        self.nav_frame.grid_columnconfigure(2, weight=1) 
+        self.nav_frame.grid_columnconfigure(3, weight=1) # Shifted expansion column to accommodate new button
         
         self.github_btn = ctk.CTkButton(
             self.nav_frame, text="GitHub Repo", width=100, height=35,
@@ -85,16 +85,40 @@ class WinDepotModern:
             font=ctk.CTkFont(weight="bold"), command=self.show_homepage
         )
         self.home_btn.grid(row=0, column=1, padx=5, pady=15)
+
+        # --- NEW MODULE: OPEN APP MANAGEMENT COMPANION ---
+        self.manage_btn = ctk.CTkButton(
+            self.nav_frame, text="Manage App", width=100, height=35,
+            fg_color="#2b2b2b", hover_color="#3a3a3a", text_color="#2ecc71",
+            border_color="#2ecc71", border_width=1,
+            font=ctk.CTkFont(weight="bold"), command=self.open_management_utility
+        )
+        self.manage_btn.grid(row=0, column=2, padx=5, pady=15)
         
         self.search_entry = ctk.CTkEntry(self.nav_frame, placeholder_text="Type application name to search WinDepot index registry...", height=35)
-        self.search_entry.grid(row=0, column=2, padx=10, pady=15, sticky="ew")
+        self.search_entry.grid(row=0, column=3, padx=10, pady=15, sticky="ew")
         self.search_entry.bind("<Return>", lambda event: self.start_search())
         
         self.search_btn = ctk.CTkButton(self.nav_frame, text="Search Repository", command=self.start_search, height=35, font=ctk.CTkFont(weight="bold"))
-        self.search_btn.grid(row=0, column=3, padx=10, pady=15)
+        self.search_btn.grid(row=0, column=4, padx=10, pady=15)
         
         self.install_btn = ctk.CTkButton(self.nav_frame, text="Install Selected", command=self.start_installation, state="disabled", height=35, fg_color="#2ecc71", hover_color="#27ae60", text_color="white", font=ctk.CTkFont(weight="bold"))
-        self.install_btn.grid(row=0, column=4, padx=15, pady=15)
+        self.install_btn.grid(row=0, column=5, padx=15, pady=15)
+
+    def open_management_utility(self):
+        """Safely resolves pathing and invokes manage_appdepot.py in an isolated child process."""
+        target_path = resource_path("manage_appdepot.py")
+        if os.path.exists(target_path):
+            self.log("[SYSTEM] Spinning up separate execution context thread for Management Dashboard...")
+            try:
+                # Runs manage_appdepot.py asynchronously using the active environment runtime
+                subprocess.Popen([sys.executable, target_path], creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
+            except Exception as e:
+                self.log(f"[ERROR] Failed to launch companion subprocess framework: {str(e)}")
+                messagebox.showerror("Process Failure", f"Could not open management utility:\n{str(e)}")
+        else:
+            self.log(f"[ERROR] Subprocess lookup failed. 'manage_appdepot.py' missing at: {target_path}")
+            messagebox.showerror("File Error", f"Management script missing!\nEnsure 'manage_appdepot.py' exists in your directory.")
 
     def setup_homepage_view(self):
         self.home_frame = ctk.CTkFrame(self.content_container, corner_radius=10)

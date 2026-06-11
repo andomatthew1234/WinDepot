@@ -5,9 +5,16 @@ title WinDepot Installer
 color 0B
 
 :: ==========================
-:: CONFIG
+:: DYNAMIC DESKTOP DETECTION
 :: ==========================
-set "INSTALL_DIR=%USERPROFILE%\Desktop\Appdepot"
+:: This checks the Windows Registry to find your true Desktop path (handles OneDrive seamlessly)
+for /f "tokens=2*" %%A in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" /v Desktop') do (
+    set "DESKTOP_RAW=%%B"
+)
+:: Expand %USERPROFILE% if the registry used an environmental string
+for /f "delims=" %%I in ("!DESKTOP_RAW!") do set "TRUE_DESKTOP=%%I"
+
+set "INSTALL_DIR=%TRUE_DESKTOP%\Appdepot"
 set "ZIP_FILE=%TEMP%\windepot_release.zip"
 set "URL=https://github.com/andomatthew1234/WinDepot/releases/latest/download/windepot.zip"
 
@@ -16,13 +23,14 @@ echo ==========================================
 echo            WINDEPOT INSTALLER
 echo ==========================================
 echo.
+echo Resolved Target Desktop: %TRUE_DESKTOP%
 echo Downloading latest release...
 echo.
 
 :: ==========================
 :: DOWNLOAD
 :: ==========================
-powershell -Command "Invoke-WebRequest -Uri '%URL%' -OutFile '%ZIP_FILE%'"
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%URL%' -OutFile '%ZIP_FILE%'"
 
 if not exist "%ZIP_FILE%" (
     echo.
@@ -47,7 +55,7 @@ mkdir "%INSTALL_DIR%"
 :: ==========================
 :: EXTRACT
 :: ==========================
-echo Extracting files to Desktop...
+echo Extracting files to Appdepot...
 
 powershell -Command "Expand-Archive -Force '%ZIP_FILE%' '%INSTALL_DIR%'"
 
@@ -68,7 +76,6 @@ echo Searching for setup.bat...
 set "FOUND="
 set "FOUND_DIR="
 
-:: This loops through the extracted folder to find exactly where setup.bat landed
 for /r "%INSTALL_DIR%" %%F in (setup.bat) do (
     set "FOUND=%%F"
     set "FOUND_DIR=%%~dpF"
@@ -77,12 +84,6 @@ for /r "%INSTALL_DIR%" %%F in (setup.bat) do (
 
 echo.
 echo [ERROR] setup.bat was not found in the ZIP.
-echo.
-echo Make sure your GitHub Release ZIP contains:
-echo     setup.bat
-echo     store.py
-echo     assets/
-echo.
 pause
 exit /b
 
@@ -94,9 +95,7 @@ echo [OK] Found setup.bat
 echo [INFO] Starting setup...
 echo.
 
-:: Change the working directory to where setup.bat is located
 cd /d "!FOUND_DIR!"
-
 call "!FOUND!"
 
 exit

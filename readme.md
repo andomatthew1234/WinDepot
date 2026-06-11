@@ -2,47 +2,50 @@
 
 
 **The best app installer for Windows. Period.**
-Enter a search term. Click enter. Done.
+Enter a search term. Click enter. Click install. Done.
 
-## Script features
-* 📃 **Encryption** Easily encrypt text and decrypt text
-* 🌊 **Redesigned for perfection** Easy to install. Download. Cd. Done.
-* 💻 **Simple and lightweight** Encrypto loads instantly, and stays instantly.
+## WinDepot app store features
+* ⚡ **Built to be fast** WinDepot is built from the ground up to be the fastest app installer. It's fast to install, fast to search, and fast to download.
+* 🏪 **Every. Single. App.** Everything on the Microsoft Store (excluding Xbox apps), plus the Winget store (basically every app on the planet) is on WinDepot.
+* 💻 **Easy to use** WinDepot is easy to use - and looks good while it's at it. It syncs with your Windows theme and Windows Theme color for an unmatched UI.
 
 ## 🛠️ Tech Stack
-* **Frontend / Backend:** Python
+* **Frontend / Backend:** Python, Pillow, TKinter, CustomTKinter
+* **App installation:** Winget
+* **WinDepot store installation:** Python + .bat scripts
 
-## 🌐 How to use Encryptco
-1. Make sure Encryptco is installed! If it isn't, check the Installation page below.
-2. Run Encryptco by double-clicking `app.py` in the folder you put Encryptco in.
-3. Select between:
-   - **Encrypt** - encrypt text so no one else sees it.
-   - **Decrypt** - decrypt the text that your friend sent to you.
-   - **Exit** - exit the app.
+## 🌐 How to use WinDepot after installation
+1. Make sure WinDepot is installed! If it isn't, check the Installation page below. You can check if it's installed by seeing if there is a 'WinDepot' folder on your desktop.
+2. Run WinDepot by double-clicking `store.py` in the AppDepot folder (on your desktop).
 
-Select the option you want. Then enter the text you want to encrypt/decrypt. Choose a key between `0-10000000`. Make sure only you and your friend know this key. Press Enter and you're all done!
+Note: there are other files in WinDepot. Here's what they do:
+- /assets - our images for our homepage and branding
+- favicon.png / favicon.ico - our logo images
+- installer.bat - this is what you use to download WinDepot. It will download files. That's it.
+- manage_appdepot.py - this is the python file you use for Uninstalling and troubleshooting appdepot.
+- python_installer.exe - this app will install Python if you don't already have it on the setup.bat page
+- readme.md - this is the text you're reading right now. Seriously.
+- setup.bat - after running installer.bat, this downloads Pillow/CustomTKINTER (makes the app look good and functional), makes sure python is installed (and installs it if it isn't), and adds the folder to your desktop.
+- store.py - this is the actual app itsself.
+- other .zip files - for our releases page
 
 ---
 
 # ⚡ Lightning installation
-*(Seriously, a 2yo could do this. Watch the video if you're still confused.)*
+*(Seriously, a 2yo could do this.)*
 
-<p align="center">
-  <video src="git_assets/video.mp4" controls width="800">
-    Your browser does not support the video tag.
-  </video>
-</p>
+
 
 1. **Download** the installer by going to:
-   https://github.com/andomatthew1234/encryptco/releases/latest/
-2. **Double click** installer.bat
+   https://github.com/andomatthew1234/WinDepot/releases/latest/
+2. **Double click** installer.bat that the website just downloaded
 3. **Select** run to confirm the file will download
 
 *Windows may give you a scary "Publisher not verified" warning. That's expected because the installer isn't code-signed.*
 
 ### How the installer works
 
-- Downloads the latest version of Encryptco (the whole ZIP file)
+- Downloads the latest version of WinDepot (the whole ZIP file)
 - Extracts the ZIP to a folder
 - Opens that folder in the terminal and runs `setup.bat`
 
@@ -59,24 +62,24 @@ The `setup.bat` file will:
 ## Medium setup
 *(Try this if Lightning doesn't work.)*
 
-1. Download Encrypto by clicking the **Code** button at the top of the page > **Download ZIP**
-2. Extract Encrypto by right-clicking the folder you downloaded > **Extract All**
+1. Download AppDepot by clicking the **Code** button at the top of the page > **Download ZIP**
+2. Extract WinDepot by right-clicking the folder you downloaded > **Extract All**
 3. Double-click on `setup.bat`. Our installer will:
    - Make sure Python is installed (and install it if it isn't)
    - Download all required files
    - Make sure you're ready to go
-4. Run Encryptco by double-clicking `app.py`
+4. Run WinDepot by double-clicking `store.py`
 
 ---
 
 ## Manual setup
 *(Not recommended.)*
 
-It takes a few minutes, but here's how to install Encryptco.
+It takes a few minutes, but here's how to install WinDepot.
 
 ### 1. Make sure Python is installed
 
-The Python software must be installed to run Encryptco.
+The Python software must be installed to run WinDepot.
 
 If you don't have it, get it from the Microsoft Store:
 
@@ -103,25 +106,25 @@ If it doesn't come back with a red error, you're ready to go.
 
 ### 3. Run the application
 
-Double-click `app.py`.
+Double-click `store.py`.
 
 If this does not work:
 
-- Right-click `app.py`
+- Right-click `store.py`
 - Select **Open with**
 - Choose **Python**
 
 ### 4. Use the app!
 
-You're ready to encrypt and decrypt messages.
+You're ready to install all you want.
 
 ---
 
 ## 💡 Tip
 
-You can pin Encryptco to the taskbar for easy access.
+You can pin WinDepot to the taskbar for easy access.
 
-1. Right-click `app.py`
+1. Right-click `store.py`
 2. Select **Create shortcut**
 3. Customize the icon and name if you want
 4. Right-click the shortcut
