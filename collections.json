@@ -1,0 +1,37 @@
+{
+    "🧑‍💻 Development Hub": {
+        "description": "Essential environments, runtimes, and version control tools for modern software development.",
+        "apps": [
+            {"name": "Visual Studio Code", "id": "XP9KHM4BK9FZ7Q"},
+            {"name": "Python 3.13", "id": "9PNRBTZXMB4Z"},
+            {"name": "Git", "id": "Git.Git"},
+            {"name": "Node.js", "id": "OpenJS.NodeJS"}
+        ]
+    },
+    "🌐 Internet & Browsers": {
+        "description": "Top-tier web navigation clients optimized for speed, privacy, and development.",
+        "apps": [
+            {"name": "Google Chrome", "id": "Google.Chrome"},
+            {"name": "Thorium Browser", "id": "Alex313031.Thorium"},
+            {"name": "Brave Browser", "id": "Brave.Brave"},
+            {"name": "Mozilla Firefox", "id": "Mozilla.Firefox"}
+        ]
+    },
+    "🔨 Core Utilities": {
+        "description": "Powerful system modifications and essential lifestyle applications.",
+        "apps": [
+            {"name": "Spotify", "id": "9NCBCSZSJRSB"},
+            {"name": "PowerToys Preview", "id": "XP89DCGQ3K6VLD"},
+            {"name": "7-Zip", "id": "7zip.7zip"},
+            {"name": "VLC Media Player", "id": "VideoLAN.VLC"}
+        ]
+    },
+    "🎮 Gaming Essentials": {
+        "description": "Everything you need to deploy gaming frameworks, storefronts, and chat clients.",
+        "apps": [
+            {"name": "Steam", "id": "Valve.Steam"},
+            {"name": "Discord", "id": "Discord.Discord"},
+            {"name": "Epic Games Launcher", "id": "EpicGames.EpicGamesLauncher"}
+        ]
+    }
+}

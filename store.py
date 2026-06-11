@@ -46,7 +46,7 @@ class WinDepotModern:
         self.image_cache = [] 
         self.icon_image = None 
         
-        # --- State Variables ---
+        # State Variables
         self.settings_window = None
         self.current_theme = "System"
         self.current_font_size = 10
@@ -89,7 +89,43 @@ class WinDepotModern:
         self.log("[SYSTEM] Launching silent background cache mapping for installed apps...")
         threading.Thread(target=self.build_installed_cache, daemon=True).start()
 
-    # --- CRITICAL FIX: THE LOGGING ENGINE ---
+    # --- PREMIUM UX TOAST NOTIFICATIONS ---
+    def show_toast(self, title, message, color_theme="#2ecc71"):
+        """Slides a non-blocking notification in from the bottom right corner of the main window."""
+        if hasattr(self, "current_toast") and self.current_toast and self.current_toast.winfo_exists():
+            self.current_toast.destroy()
+
+        toast = ctk.CTkFrame(self.root, corner_radius=8, fg_color=("#ffffff", "#2b2b2b"), border_width=2, border_color=color_theme)
+        self.current_toast = toast
+        
+        lbl_title = ctk.CTkLabel(toast, text=title, font=ctk.CTkFont(weight="bold", size=14), text_color=color_theme)
+        lbl_title.pack(anchor="w", padx=15, pady=(10, 0))
+        
+        lbl_msg = ctk.CTkLabel(toast, text=message, font=ctk.CTkFont(size=12), justify="left", wraplength=250)
+        lbl_msg.pack(anchor="w", padx=15, pady=(0, 10))
+
+        # Start off-screen right
+        toast.place(relx=1.05, rely=0.95, anchor="se")
+        
+        def slide_in(current_x):
+            if current_x > 0.98:
+                current_x -= 0.01
+                toast.place(relx=current_x, rely=0.95, anchor="se")
+                self.root.after(10, lambda: slide_in(current_x))
+            else:
+                self.root.after(4000, slide_out, 0.98)
+
+        def slide_out(current_x):
+            if not toast.winfo_exists(): return
+            if current_x < 1.05:
+                current_x += 0.01
+                toast.place(relx=current_x, rely=0.95, anchor="se")
+                self.root.after(10, lambda: slide_out(current_x))
+            else:
+                toast.destroy()
+
+        slide_in(1.05)
+
     def log(self, message):
         def append():
             self.log_text.configure(state="normal")
@@ -131,34 +167,27 @@ class WinDepotModern:
     def load_favicon(self):
         icon_path_ico = resource_path("favicon.ico")
         icon_path_png = resource_path("favicon.png")
-        
         try:
             if os.path.exists(icon_path_ico):
                 self.root.iconbitmap(icon_path_ico)
             elif os.path.exists(icon_path_png):
                 self.icon_image = tk.PhotoImage(file=icon_path_png)
                 self.root.iconphoto(True, self.icon_image)
-            else:
-                self.log(f"[SYSTEM] Notice: Missing both 'favicon.ico' and 'favicon.png'")
         except Exception as e:
             self.log(f"[SYSTEM] Could not render icon file. Error: {str(e)}")
 
     # --- JSON BULK LIST HANDLERS ---
     def get_bulk_items(self):
-        if not os.path.exists(BULK_FILE): 
-            return []
+        if not os.path.exists(BULK_FILE): return []
         try:
-            with open(BULK_FILE, "r") as f:
-                return json.load(f)
-        except Exception:
-            return []
+            with open(BULK_FILE, "r") as f: return json.load(f)
+        except Exception: return []
 
     def save_bulk_items(self, items):
         try:
-            with open(BULK_FILE, "w") as f:
-                json.dump(items, f, indent=4)
+            with open(BULK_FILE, "w") as f: json.dump(items, f, indent=4)
         except Exception as e:
-            self.log(f"[ERROR] Failed to save to bulk.json: {e}")
+            self.show_toast("Error", f"Failed to save bulk JSON: {e}", color_theme="#e74c3c")
 
     # --- INLINE ACCELERATED LOADING BAR ENGINE ---
     def start_btn_loading(self, btn, target_text=""):
@@ -170,7 +199,6 @@ class WinDepotModern:
                 "command": btn.cget("command"),
                 "state": btn.cget("state")
             }
-            
             btn.configure(text=target_text, command=lambda: None, state="disabled")
             loader = ctk.CTkProgressBar(btn.master, height=6, mode="indeterminate")
             loader.place(in_=btn, relx=0.5, rely=0.5, anchor="center", relwidth=0.7)
@@ -181,59 +209,43 @@ class WinDepotModern:
         btn_id = id(btn)
         if btn_id in self.animating_buttons:
             btn_data = self.animating_buttons.pop(btn_id)
-            
             if "loader" in btn_data:
                 btn_data["loader"].stop()
                 btn_data["loader"].place_forget()
                 btn_data["loader"].destroy()
-                
-            btn.configure(
-                text=btn_data["text"], 
-                command=btn_data["command"], 
-                state="normal"
-            )
+            btn.configure(text=btn_data["text"], command=btn_data["command"], state="normal")
 
     # --- DYNAMIC ACTION BUTTON CONTROLLER ---
     def update_action_button(self):
-        if id(self.install_btn) in self.animating_buttons:
-            return
-
+        if id(self.install_btn) in self.animating_buttons: return
         if self.bulk_mode_enabled:
             if self.current_view == "search":
                 self.install_btn.configure(text="Add to bulk list", command=self.add_to_bulk)
-                if self.tree.selection():
-                    self.install_btn.configure(state="normal")
-                else:
-                    self.install_btn.configure(state="disabled")
+                if self.tree.selection(): self.install_btn.configure(state="normal")
+                else: self.install_btn.configure(state="disabled")
             elif self.current_view == "home":
                 self.install_btn.configure(text="Start Bulk Install", command=self.start_bulk_install)
                 bulk_items = self.get_bulk_items()
-                if bulk_items and not self.bulk_install_running:
-                    self.install_btn.configure(state="normal")
-                else:
-                    self.install_btn.configure(state="disabled")
+                if bulk_items and not self.bulk_install_running: self.install_btn.configure(state="normal")
+                else: self.install_btn.configure(state="disabled")
             else:
                 self.install_btn.configure(text="Bulk Mode Active", state="disabled")
         else:
             self.install_btn.configure(text="Install Selected", command=self.start_installation)
-            if self.current_view == "search" and self.tree.selection():
-                self.install_btn.configure(state="normal")
-            else:
-                self.install_btn.configure(state="disabled")
+            if self.current_view == "search" and self.tree.selection(): self.install_btn.configure(state="normal")
+            else: self.install_btn.configure(state="disabled")
 
     def toggle_bulk_mode(self):
         if self.bulk_install_running:
-            messagebox.showwarning("Busy", "Cannot toggle bulk mode while an installation is running.")
+            self.show_toast("Busy", "Cannot toggle bulk mode while an installation is running.", color_theme="#f39c12")
             return
 
         self.bulk_mode_enabled = not self.bulk_mode_enabled
         if self.bulk_mode_enabled:
             self.bulk_toggle_btn.configure(text="Bulk Mode: ON", fg_color="#d35400", hover_color="#e67e22")
-            self.log("[SYSTEM] Bulk Mode Active. You can now queue installations.")
+            self.show_toast("Mode Changed", "Bulk Mode Active. You can now queue installations.", color_theme="#d35400")
         else:
             self.bulk_toggle_btn.configure(text="Bulk Mode: OFF", fg_color="#555555", hover_color="#777777")
-            self.log("[SYSTEM] Bulk Mode Disabled.")
-        
         self.update_action_button()
 
     def setup_navigation_bar(self):
@@ -359,7 +371,7 @@ class WinDepotModern:
         )
         self.start_guide_btn.pack(fill="both", expand=True, padx=10, pady=10)
 
-    # --- HUB NAVIGATION (FIXED PATH) ---
+    # --- HUB NAVIGATION ---
     def open_collections_hub(self):
         self.log("[SYSTEM] Spinning up independent environment for Collections Hub...")
         target_path = resource_path(os.path.join("app_collections", "app_collections.py"))
@@ -368,10 +380,9 @@ class WinDepotModern:
             try:
                 subprocess.Popen([sys.executable, target_path], creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
             except Exception as e:
-                self.log(f"[ERROR] Failed to launch Collections framework: {str(e)}")
+                self.show_toast("Launch Error", f"Failed to launch Collections: {str(e)}", color_theme="#e74c3c")
         else:
-            self.log(f"[ERROR] Module missing. Looked for: {target_path}")
-            messagebox.showerror("Module Error", f"Could not find the Collections framework!\nExpected path:\n{target_path}")
+            self.show_toast("Module Missing", f"Could not find the Collections file.", color_theme="#e74c3c")
 
     def open_settings_popup(self):
         try:
@@ -571,10 +582,10 @@ class WinDepotModern:
             except Exception as e:
                 self.log(f"[ERROR] Failed to launch companion framework: {str(e)}")
         else:
-            self.log(f"[ERROR] Subprocess lookup failed. 'manage_appdepot.py' missing.")
-            messagebox.showerror("File Error", "Management script missing!\nEnsure 'manage_appdepot.py' exists in your directory.")
+            self.show_toast("File Error", "Management script missing!", color_theme="#e74c3c")
 
     def start_updater(self):
+        # We keep this as askyesno because we need a hard block before nuking the app directory
         confirm = messagebox.askyesno(
             "Update WinDepot", 
             "This will close the store, safely wipe the legacy application files, deploy the latest GitHub release, and restart automatically.\n\nDo you want to proceed?"
@@ -587,7 +598,7 @@ class WinDepotModern:
                 self.root.destroy()
                 sys.exit(0)
             else:
-                messagebox.showerror("Error", "updater.bat is missing from the application directory!")
+                self.show_toast("Error", "updater.bat is missing!", color_theme="#e74c3c")
 
     # --- SQLITE DB POLLING & CACHE LOGIC ---
     def build_installed_cache(self):
@@ -715,12 +726,12 @@ class WinDepotModern:
                 if not line and process.poll() is not None: break
                 if line: self.log(f"  > {line.strip()}")
             if process.poll() == 0:
-                self.log(f"[SUCCESS] Uninstallation complete for {app_id}.")
+                self.root.after(0, lambda: self.show_toast("Uninstalled", f"{app_id} removed successfully.", color_theme="#2ecc71"))
                 self.root.after(0, lambda: self.inst_tree.delete(tree_item))
             else:
-                self.log(f"[WARNING] Uninstall failed or cancelled with code: {process.poll()}")
+                self.root.after(0, lambda: self.show_toast("Warning", f"Uninstall finished with code: {process.poll()}", color_theme="#e67e22"))
         except Exception as e:
-            self.log(f"[ERROR] Uninstall execution error: {str(e)}")
+            self.root.after(0, lambda err=e: self.show_toast("Error", f"Uninstall error: {str(err)}", color_theme="#e74c3c"))
         finally:
             self.root.after(0, lambda: self.stop_btn_loading(self.uninstall_btn))
             self.root.after(0, lambda: self.update_all_btn.configure(state="normal"))
@@ -731,7 +742,7 @@ class WinDepotModern:
         if not messagebox.askyesno("Update All", "This will command WinGet to update all compatible applications on your system automatically.\n\nProceed?"): return
         self.start_btn_loading(self.update_all_btn)
         self.uninstall_btn.configure(state="disabled")
-        self.log("\n[EXECUTION START] Launching global package upgrade sequence...")
+        self.show_toast("Updating", "Global package upgrade initiated.", color_theme="#3498db")
         threading.Thread(target=self.execute_update_all, daemon=True).start()
 
     def execute_update_all(self):
@@ -743,11 +754,11 @@ class WinDepotModern:
                 if not line and process.poll() is not None: break
                 if line: self.log(f"  > {line.strip()}")
             if process.poll() == 0:
-                self.log("[SUCCESS] Global update sequence resolved.")
+                self.root.after(0, lambda: self.show_toast("Success", "Global update sequence resolved.", color_theme="#2ecc71"))
             else:
-                self.log(f"[WARNING] Global update finished with code: {process.poll()}")
+                self.root.after(0, lambda: self.show_toast("Warning", f"Global update finished with code: {process.poll()}", color_theme="#e67e22"))
         except Exception as e:
-            self.log(f"[ERROR] Global update execution error: {str(e)}")
+            self.root.after(0, lambda err=e: self.show_toast("Error", f"Update error: {str(err)}", color_theme="#e74c3c"))
         finally:
             self.root.after(0, lambda: self.stop_btn_loading(self.update_all_btn))
             self.installed_cache_ready = False
@@ -783,7 +794,7 @@ class WinDepotModern:
     def start_search(self):
         query = self.search_entry.get().strip()
         if not query:
-            messagebox.showwarning("Input Missing", "Please enter a search keyword.")
+            self.show_toast("Input Missing", "Please enter a search keyword.", color_theme="#f39c12")
             return
         self.search_btn.configure(state="disabled", text="Searching...")
         self.log(f"[INFO] Scanning WinGet index registry maps for '{query}'...")
@@ -855,17 +866,17 @@ class WinDepotModern:
         
         items = self.get_bulk_items()
         if any(i["id"] == app_id for i in items):
-            messagebox.showinfo("Bulk List", f"'{app_name}' is already in the bulk list.")
+            self.show_toast("Already Added", f"'{app_name}' is already in your bulk list.", color_theme="#3498db")
         else:
             items.append({"name": app_name, "id": app_id})
             self.save_bulk_items(items)
-            self.log(f"[BULK] Added {app_name} to queue.")
-            messagebox.showinfo("Bulk List", f"Added '{app_name}' to the bulk installation queue.")
+            self.show_toast("Added to Queue", f"'{app_name}' queued for installation.", color_theme="#2ecc71")
 
     def start_bulk_install(self):
         items = self.get_bulk_items()
         if not items: return
         self.start_btn_loading(self.install_btn, "Processing...")
+        self.show_toast("Bulk Mode Started", "Processing installation queue...", color_theme="#3498db")
         threading.Thread(target=self.execute_bulk_install, daemon=True).start()
 
     def execute_bulk_install(self):
@@ -900,8 +911,7 @@ class WinDepotModern:
         self.root.after(0, lambda: self.bulk_status_lbl.configure(text=""))
         self.root.after(0, lambda: self.stop_btn_loading(self.install_btn))
         self.root.after(0, self.update_action_button)
-        self.log("[BULK COMPLETED] All bulk queue processes have resolved.")
-        self.root.after(0, lambda: messagebox.showinfo("Bulk Engine", "All applications in the bulk list have been processed!"))
+        self.root.after(0, lambda: self.show_toast("Bulk Completed", "All bulk queue processes have resolved.", color_theme="#2ecc71"))
         
         self.installed_cache_ready = False
         threading.Thread(target=self.build_installed_cache, daemon=True).start()
@@ -914,7 +924,7 @@ class WinDepotModern:
         
         self.start_btn_loading(self.install_btn, "Installing...")
         self.search_btn.configure(state="disabled")
-        self.log(f"\n[EXECUTION START] Launching silent automated deployment for: {app_name}...")
+        self.show_toast("Installing", f"Deployment for {app_name} has started.", color_theme="#f39c12")
         threading.Thread(target=self.execute_installation, args=(app_id,), daemon=True).start()
 
     def execute_installation(self, app_id):
@@ -926,13 +936,13 @@ class WinDepotModern:
                 if not line and process.poll() is not None: break
                 if line: self.log(f"  > {line.strip()}")
             if process.poll() == 0:
-                self.log("[SUCCESS] Package installation sequence resolved cleanly.")
+                self.root.after(0, lambda: self.show_toast("Installed", f"Package sequence resolved cleanly.", color_theme="#2ecc71"))
             elif process.poll() == 2316632107:
-                self.log("[INFO] Optimization Complete: This application is already installed and up to date!")
+                self.root.after(0, lambda: self.show_toast("Installed", f"This application is already installed and up to date!", color_theme="#3498db"))
             else:
-                self.log(f"[WARNING] Installation finished with unexpected return token: {process.poll()}")
+                self.root.after(0, lambda: self.show_toast("Warning", f"Installation finished with unexpected token: {process.poll()}", color_theme="#e67e22"))
         except Exception as e:
-            self.log(f"[FAILURE] Thread execution error environment block: {str(e)}")
+            self.root.after(0, lambda err=e: self.show_toast("Error", f"Execution error: {str(err)}", color_theme="#e74c3c"))
         finally:
             self.root.after(0, lambda: self.stop_btn_loading(self.install_btn))
             self.root.after(0, lambda: self.search_btn.configure(state="normal"))
