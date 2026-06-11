@@ -5,70 +5,157 @@ import subprocess
 import threading
 import re
 import os
+import sys
+import webbrowser
+from PIL import Image # Explicitly import Pillow for image handling
 
 # --- GLOBAL UI THEME CONFIGURATION ---
-ctk.set_appearance_mode("System")  # Options: "System", "Dark", "Light"
-ctk.set_default_color_theme("blue") # Options: "blue", "green", "dark-blue"
+ctk.set_appearance_mode("System")  
+ctk.set_default_color_theme("blue") 
+
+# --- BULLETPROOF PATH RESOLVER ---
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
 
 class WinDepotModern:
     def __init__(self, root):
         self.root = root
-        # BRANDING UPDATE: Changed titlebar name to WinDepot App Store
         self.root.title("WinDepot App Store")
-        self.root.geometry("900x650")
-        self.root.minsize(800, 600)
+        self.root.geometry("950x700")
+        self.root.minsize(850, 600)
         
-        # BRANDING UPDATE: Dynamically load and inject favicon.png asset
+        # GARBAGE COLLECTION SHIELD: Store image references here so they don't get deleted
+        self.image_cache = [] 
+        self.icon_image = None 
+        
         self.root.after(200, self.load_favicon)
         
-        # Configure grid weight for responsiveness
         self.root.grid_columnconfigure(0, weight=1)
-        self.root.grid_rowconfigure(1, weight=1) # Results table section expands
+        self.root.grid_rowconfigure(1, weight=1) 
         
         # --- UI LAYOUT CREATION ---
-        self.setup_ui()
-        self.log("System Status: Operational. Ready to search the WinDepot index repository.")
+        self.setup_navigation_bar()
+        
+        self.content_container = ctk.CTkFrame(self.root, fg_color="transparent")
+        self.content_container.grid(row=1, column=0, padx=15, pady=5, sticky="nsew")
+        self.content_container.grid_columnconfigure(0, weight=1)
+        self.content_container.grid_rowconfigure(0, weight=1)
+        
+        self.setup_homepage_view()
+        self.setup_results_view()
+        self.setup_bottom_log()
+        
+        self.show_homepage()
+        self.log("System Status: Operational. Welcome to the WinDepot App Store Dashboard.")
         
     def load_favicon(self):
-        """Safely injects the favicon.png as the native app window & taskbar icon."""
-        icon_path = "favicon.png"
+        """Safely injects the favicon using strong references."""
+        icon_path = resource_path("favicon.png")
         if os.path.exists(icon_path):
             try:
-                img = tk.PhotoImage(file=icon_path)
-                self.root.iconphoto(True, img)
+                # Save to self.icon_image to prevent garbage collection!
+                self.icon_image = tk.PhotoImage(file=icon_path)
+                self.root.iconphoto(True, self.icon_image)
             except Exception as e:
-                self.log(f"[SYSTEM] Could not render icon file: {str(e)}")
+                self.log(f"[SYSTEM] Could not render icon file. Error: {str(e)}")
         else:
-            self.log("[SYSTEM] Notice: 'favicon.png' asset missing from local directory path.")
+            self.log(f"[SYSTEM] Notice: 'favicon.png' missing at path: {icon_path}")
 
-    def setup_ui(self):
-        """Builds a polished, modern layout using CustomTkinter widgets."""
+    def setup_navigation_bar(self):
+        self.nav_frame = ctk.CTkFrame(self.root, corner_radius=10)
+        self.nav_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ew")
+        self.nav_frame.grid_columnconfigure(2, weight=1) 
         
-        # 1. TOP FRAME (Search Controls)
-        self.search_frame = ctk.CTkFrame(self.root, corner_radius=10)
-        self.search_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ew")
-        self.search_frame.grid_columnconfigure(1, weight=1) # Entry box stretches
+        self.github_btn = ctk.CTkButton(
+            self.nav_frame, text="GitHub Repo", width=100, height=35,
+            fg_color="#333333", hover_color="#444444", text_color="white",
+            font=ctk.CTkFont(weight="bold"), command=self.open_github_repository
+        )
+        self.github_btn.grid(row=0, column=0, padx=(15, 5), pady=15)
         
-        self.search_label = ctk.CTkLabel(self.search_frame, text="Search App:", font=ctk.CTkFont(size=13, weight="bold"))
-        self.search_label.grid(row=0, column=0, padx=15, pady=15, sticky="w")
+        self.home_btn = ctk.CTkButton(
+            self.nav_frame, text="Home", width=70, height=35,
+            font=ctk.CTkFont(weight="bold"), command=self.show_homepage
+        )
+        self.home_btn.grid(row=0, column=1, padx=5, pady=15)
         
-        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="e.g., vlc, 7zip, git.git...", height=35)
-        self.search_entry.grid(row=0, column=1, padx=10, pady=15, sticky="ew")
+        self.search_entry = ctk.CTkEntry(self.nav_frame, placeholder_text="Type application name to search WinDepot index registry...", height=35)
+        self.search_entry.grid(row=0, column=2, padx=10, pady=15, sticky="ew")
         self.search_entry.bind("<Return>", lambda event: self.start_search())
         
-        self.search_btn = ctk.CTkButton(self.search_frame, text="Search Repository", command=self.start_search, height=35, font=ctk.CTkFont(weight="bold"))
-        self.search_btn.grid(row=0, column=2, padx=10, pady=15)
+        self.search_btn = ctk.CTkButton(self.nav_frame, text="Search Repository", command=self.start_search, height=35, font=ctk.CTkFont(weight="bold"))
+        self.search_btn.grid(row=0, column=3, padx=10, pady=15)
         
-        self.install_btn = ctk.CTkButton(self.search_frame, text="Install Selected", command=self.start_installation, state="disabled", height=35, fg_color="#2ecc71", hover_color="#27ae60", text_color="white", font=ctk.CTkFont(weight="bold"))
-        self.install_btn.grid(row=0, column=3, padx=15, pady=15)
+        self.install_btn = ctk.CTkButton(self.nav_frame, text="Install Selected", command=self.start_installation, state="disabled", height=35, fg_color="#2ecc71", hover_color="#27ae60", text_color="white", font=ctk.CTkFont(weight="bold"))
+        self.install_btn.grid(row=0, column=4, padx=15, pady=15)
+
+    def setup_homepage_view(self):
+        self.home_frame = ctk.CTkFrame(self.content_container, corner_radius=10)
+        self.home_frame.grid_columnconfigure((0, 1, 2), weight=1)
+        self.home_frame.grid_rowconfigure(0, weight=1)
         
-        # 2. MIDDLE FRAME (Results Table Container)
-        self.table_frame = ctk.CTkFrame(self.root, corner_radius=10)
-        self.table_frame.grid(row=1, column=0, padx=15, pady=5, sticky="nsew")
+        # Build absolute resource destination paths
+        ms_path = resource_path(os.path.join("assets", "ms.png"))
+        term_path = resource_path(os.path.join("assets", "terminal.png"))
+        comm_path = resource_path(os.path.join("assets", "community.png"))
+        
+        # Column 1
+        self.ms_card = ctk.CTkFrame(self.home_frame, fg_color=("#eef2f7", "#252529"), corner_radius=8)
+        self.ms_card.grid(row=0, column=0, padx=20, pady=40, sticky="nsew")
+        self.render_card_content(self.ms_card, ms_path, "Microsoft Store Source", "Direct app ingestion pipeline powered securely via native WinGet msstore ecosystem backends.")
+
+        # Column 2
+        self.term_card = ctk.CTkFrame(self.home_frame, fg_color=("#eef2f7", "#252529"), corner_radius=8)
+        self.term_card.grid(row=0, column=1, padx=20, pady=40, sticky="nsew")
+        self.render_card_content(self.term_card, term_path, "Windows Package CLI", "Safe automated asynchronous engine bypassing local multi-threading rendering restrictions entirely.")
+
+        # Column 3
+        self.comm_card = ctk.CTkFrame(self.home_frame, fg_color=("#eef2f7", "#252529"), corner_radius=8)
+        self.comm_card.grid(row=0, column=2, padx=20, pady=40, sticky="nsew")
+        self.render_card_content(self.comm_card, comm_path, "Community Repository", "Instant access deployment manifests updated and verified daily by global manifest maintainers.")
+
+    def render_card_content(self, parent_frame, image_path, title_text, description_text):
+        parent_frame.grid_columnconfigure(0, weight=1)
+        
+        if os.path.exists(image_path):
+            try:
+                # Load via PIL
+                pil_img = Image.open(image_path)
+                
+                # Convert to CTkImage
+                ctk_image = ctk.CTkImage(dark_image=pil_img, light_image=pil_img, size=(90, 90))
+                
+                # IMPORTANT: Append to cache to prevent garbage collection!
+                self.image_cache.append(ctk_image)
+                
+                img_label = ctk.CTkLabel(parent_frame, image=ctk_image, text="")
+                img_label.pack(pady=(40, 15))
+            except Exception as e:
+                self.log(f"[ERROR] Failed to load image {image_path}: {e}")
+                fallback_label = ctk.CTkLabel(parent_frame, text="⚠️ Render Error")
+                fallback_label.pack(pady=(40, 15))
+        else:
+            fallback_label = ctk.CTkLabel(parent_frame, text=f"📦 [Missing: {os.path.basename(image_path)}]", font=ctk.CTkFont(slant="italic", size=11))
+            fallback_label.pack(pady=(40, 15))
+            
+        title = ctk.CTkLabel(parent_frame, text=title_text, font=ctk.CTkFont(size=16, weight="bold"))
+        title.pack(pady=10, padx=15)
+        
+        desc = ctk.CTkLabel(parent_frame, text=description_text, font=ctk.CTkFont(size=12), wraplength=200, text_color="gray")
+        desc.pack(pady=(5, 30), padx=20)
+
+    def setup_results_view(self):
+        self.table_frame = ctk.CTkFrame(self.content_container, corner_radius=10)
         self.table_frame.grid_columnconfigure(0, weight=1)
         self.table_frame.grid_rowconfigure(0, weight=1)
         
-        # Configure Treeview styling to fit into modern dark/light mode context smoothly
         style = ttk.Style()
         style.theme_use("default")
         style.configure("Treeview", 
@@ -105,8 +192,8 @@ class WinDepotModern:
         self.scrollbar.grid(row=0, column=1, padx=(0, 15), pady=15, sticky="ns")
         
         self.tree.bind("<<TreeviewSelect>>", self.on_item_select)
-        
-        # 3. BOTTOM FRAME (Terminal Log Component)
+
+    def setup_bottom_log(self):
         self.log_frame = ctk.CTkFrame(self.root, corner_radius=10)
         self.log_frame.grid(row=2, column=0, padx=15, pady=15, sticky="ew")
         self.log_frame.grid_columnconfigure(0, weight=1)
@@ -118,9 +205,26 @@ class WinDepotModern:
         self.log_text.grid(row=1, column=0, padx=15, pady=15, sticky="ew")
         self.log_text.configure(state="disabled")
 
-    # --- LOGGING UTILITY ---
+    def show_homepage(self):
+        self.table_frame.grid_remove()
+        self.home_frame.grid(row=0, column=0, sticky="nsew")
+        self.install_btn.configure(state="disabled")
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+    def show_results_view(self):
+        self.home_frame.grid_remove()
+        self.table_frame.grid(row=0, column=0, sticky="nsew")
+
+    def open_github_repository(self):
+        url = "https://github.com/andomatthew1234/WinDepot"
+        try:
+            webbrowser.open_new_tab(url)
+            self.log(f"[SYSTEM] Dispatched target outbound link web-hook browser tab to: {url}")
+        except Exception as e:
+            self.log(f"[ERROR] Outbound link navigation tracking fault encountered: {str(e)}")
+
     def log(self, message):
-        """Appends status sequences into the embedded terminal view safely across threads."""
         def append():
             self.log_text.configure(state="normal")
             self.log_text.insert(tk.END, message + "\n")
@@ -128,7 +232,6 @@ class WinDepotModern:
             self.log_text.configure(state="disabled")
         self.root.after(0, append)
 
-    # --- ASYNC SEARCH ---
     def start_search(self):
         query = self.search_entry.get().strip()
         if not query:
@@ -136,58 +239,77 @@ class WinDepotModern:
             return
             
         self.search_btn.configure(state="disabled", text="Searching...")
-        # BRANDING UPDATE: Changed text from WinGet to WinDepot
-        self.log(f"[INFO] Scanning WinDepot index registry maps for target query: '{query}'...")
+        self.log(f"[INFO] Initiating Multi-Variant Scan for term: '{query}'...")
         
+        self.show_results_view()
         for item in self.tree.get_children():
             self.tree.delete(item)
             
         threading.Thread(target=self.execute_search, args=(query,), daemon=True).start()
 
-    def execute_search(self, query):
+    def run_single_winget_call(self, search_term):
         try:
             process = subprocess.run(
-                ["winget", "search", query, "--accept-source-agreements"], 
+                ["winget", "search", search_term, "--accept-source-agreements"], 
                 stdout=subprocess.PIPE, 
                 stderr=subprocess.PIPE, 
                 text=True, 
                 encoding="utf-8",
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
-            
-            if process.returncode != 0:
-                self.log(f"[ERROR] Registry call failed. Code: {process.returncode}")
-                if process.stderr:
-                    self.log(f"[DETAILS] {process.stderr.strip()}")
-                self.root.after(0, self.reset_search_button)
-                return
+            if process.returncode == 0 or process.returncode == 2316632084:
+                return process.stdout
+        except Exception:
+            pass
+        return ""
 
-            lines = process.stdout.splitlines()
+    def execute_search(self, query):
+        try:
+            variants = [query]
+            if query.lower() != query:
+                variants.append(query.lower())
+                
+            if " " in query:
+                for chunk in query.split():
+                    if len(chunk) > 2 and chunk not in variants:
+                        variants.append(chunk)
+
             parsed_apps = []
-            header_index = -1
-            
-            for i, line in enumerate(lines):
-                if line.startswith("---") or "------" in line:
-                    header_index = i
-                    break
-                    
-            if header_index != -1 and header_index > 0:
-                data_lines = lines[header_index + 1:]
-                for line in data_lines:
-                    if not line.strip():
-                        continue
-                    parts = re.split(r'\s{2,}', line.strip())
-                    if len(parts) >= 3:
-                        name = parts[0]
-                        app_id = parts[1]
-                        version = parts[2]
-                        source = parts[3] if len(parts) > 3 else "winget"
-                        parsed_apps.append((name, app_id, version, source))
+            seen_ids = set()
+
+            for variant in variants:
+                raw_output = self.run_single_winget_call(variant)
+                if not raw_output:
+                    continue
+
+                lines = raw_output.splitlines()
+                header_index = -1
+                
+                for i, line in enumerate(lines):
+                    if line.startswith("---") or "------" in line:
+                        header_index = i
+                        break
+                        
+                if header_index != -1 and header_index > 0:
+                    data_lines = lines[header_index + 1:]
+                    for line in data_lines:
+                        if not line.strip():
+                            continue
+                        parts = re.split(r'\s{2,}', line.strip())
+                        if len(parts) >= 3:
+                            name = parts[0]
+                            app_id = parts[1]
+                            version = parts[2]
+                            source = parts[3] if len(parts) > 3 else "winget"
+                            
+                            if app_id not in seen_ids:
+                                seen_ids.add(app_id)
+                                parsed_apps.append((name, app_id, version, source))
             
             self.root.after(0, self.update_tree_results, parsed_apps)
             
         except Exception as e:
-            self.log(f"[EXCEPTION] UI Wrapper internal mapping fault: {str(e)}")
+            self.log(f"[EXCEPTION] UI Wrapper algorithmic error: {str(e)}")
             self.root.after(0, self.reset_search_button)
 
     def reset_search_button(self):
@@ -195,14 +317,13 @@ class WinDepotModern:
 
     def update_tree_results(self, apps):
         if not apps:
-            self.log("[SYSTEM] Lookup complete. 0 applications found matching filter parameters.")
+            self.log("[SYSTEM] Lookup complete. 0 applications found across search variant maps.")
         else:
             for app in apps:
                 self.tree.insert("", tk.END, values=app)
-            self.log(f"[SYSTEM] Populate operations complete. Parsed {len(apps)} entries successfully.")
+            self.log(f"[SYSTEM] Clean aggregation resolved. Found {len(apps)} unique package matches.")
         self.reset_search_button()
 
-    # --- ASYNC INSTALLATION ---
     def on_item_select(self, event):
         if self.tree.selection():
             self.install_btn.configure(state="normal")
