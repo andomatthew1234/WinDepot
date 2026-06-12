@@ -3,7 +3,6 @@
         "description": "Essential environments, runtimes, and version control tools for modern software development.",
         "apps": [
             {"name": "Visual Studio Code", "id": "XP9KHM4BK9FZ7Q"},
-            {"name": "Python 3.13", "id": "9PNRBTZXMB4Z"},
             {"name": "Git", "id": "Git.Git"},
             {"name": "GitHub Desktop", "id": "GitHub.GitHubDesktop"}
         ]
