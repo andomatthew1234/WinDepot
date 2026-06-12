@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install AppDepot</title>
+    <link rel="icon" href="/assets/logo.ico" type="image/x-icon">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --text-main: #f8f9fa;
+            --card-bg: #1e293b;
+            --grad-start: #3b82f6;
+            --grad-end: #f97316;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .install-container { 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 2.5rem; 
+            padding: 3.5rem 2rem; 
+            background: var(--card-bg); 
+            border-radius: 20px; 
+            border: 1px solid #334155; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            max-width: 450px; 
+            width: 90%; 
+        }
+        
+        .logo { 
+            max-width: 140px; 
+            height: auto; 
+            display: block; 
+            border-radius: 12px;
+        }
+        
+        h1 { 
+            margin: 0; 
+            font-size: 2.2rem; 
+            font-weight: 700; 
+            color: #fff;
+        }
+        
+        .btn { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: linear-gradient(90deg, var(--grad-start), var(--grad-end)); 
+            color: #fff; 
+            text-decoration: none; 
+            padding: 1.2rem 2rem; 
+            font-size: 1.15rem; 
+            font-weight: 600; 
+            border-radius: 10px; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            border: none; 
+            cursor: pointer; 
+            width: 100%; 
+            box-shadow: 0 8px 20px -5px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 12px 25px -5px rgba(59, 130, 246, 0.5);
+        }
+        
+        .back-link { 
+            color: #94a3b8; 
+            text-decoration: none; 
+            font-size: 1rem; 
+            transition: color 0.2s; 
+            margin-top: -0.5rem;
+        }
+        
+        .back-link:hover { 
+            color: #fff; 
+            text-decoration: underline; 
+        }
+    </style>
+</head>
+<body>
+    <div class="install-container">
+        <img src="/assets/logo.png" alt="AppDepot Logo" class="logo">
+        <h1>Get AppDepot</h1>
+        <a href="https://github.com/andomatthew1234/windepot/releases/" class="btn" target="_blank" rel="noopener noreferrer">⬇️ Download from Github releases</a>
+        <a href="index.html" class="back-link">Return to Home</a>
+    </div>
+</body>
+</html>

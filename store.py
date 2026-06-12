@@ -38,7 +38,7 @@ BULK_FILE = resource_path("bulk.json")
 
 class WinDepotModern:
     def __init__(self, root):
-        self.root = root
+        self.root = rootUp
         self.root.title("WinDepot App Store")
         self.root.geometry("950x750")
         self.root.minsize(850, 650)

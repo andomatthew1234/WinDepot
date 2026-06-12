@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppDepot | Next Generation of App Installs</title>
+    <link rel="icon" href="/assets/logo.ico" type="image/x-icon">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --text-main: #f8f9fa;
+            --text-muted: #94a3b8;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --grad-start: #3b82f6;
+            --grad-end: #f97316;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container { 
+            max-width: 1440px; 
+            margin: 0 auto; 
+            padding: 5rem 3rem; 
+        }
+        
+        .layout-grid { 
+            display: flex; 
+            gap: 5rem; 
+            align-items: flex-start; 
+        }
+        
+        .left-panel { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 4rem; 
+            max-width: 60%; 
+        }
+        
+        .right-panel { 
+            flex: 0 0 40%; 
+            position: sticky; 
+            top: 5rem; 
+        }
+
+        /* Hero Section */
+        .hero { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.5rem; 
+            align-items: flex-start; 
+        }
+        
+        h1 { 
+            font-size: 4rem; 
+            margin: 0; 
+            line-height: 1.1; 
+            font-weight: 800; 
+            letter-spacing: -0.02em;
+        }
+        
+        .gradient-text { 
+            background: linear-gradient(90deg, var(--grad-start), var(--grad-end)); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+        
+        p.description { 
+            font-size: 1.25rem; 
+            color: var(--text-muted); 
+            line-height: 1.6; 
+            margin: 0 0 1rem 0; 
+            max-width: 90%;
+        }
+        
+        .btn { 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: linear-gradient(90deg, var(--grad-start), var(--grad-end)); 
+            color: #fff; 
+            text-decoration: none; 
+            padding: 1rem 2.5rem; 
+            font-size: 1.125rem; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; 
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn:hover { 
+            transform: translateY(-3px); 
+            opacity: 0.95;
+            box-shadow: 0 15px 35px -5px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Cards Section */
+        .cards-container { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 1.5rem; 
+        }
+        
+        .card { 
+            background-color: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 16px; 
+            padding: 1.5rem; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.25rem; 
+            transition: border-color 0.3s, transform 0.3s; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card:hover { 
+            border-color: #475569; 
+            transform: translateY(-5px);
+        }
+        
+        .card img { 
+            width: 100%; 
+            height: 180px; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            background-color: #0f172a; 
+        }
+        
+        .card h3 { 
+            margin: 0; 
+            font-size: 1.3rem; 
+            font-weight: 600; 
+            color: #fff;
+            line-height: 1.3;
+        }
+        
+        .card p { 
+            margin: 0; 
+            font-size: 0.95rem; 
+            color: var(--text-muted); 
+            line-height: 1.6; 
+        }
+
+        /* Computer Frame Setup */
+        .computer-frame { 
+            background: #0f172a; 
+            padding: 12px; 
+            border-radius: 20px; 
+            border: 2px solid #334155; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); 
+            position: relative; 
+        }
+        
+        .computer-frame::before { 
+            content: ''; 
+            display: block; 
+            height: 16px; 
+            width: 4px; 
+            background: #334155; 
+            position: absolute; 
+            left: 50%; 
+            top: -16px; 
+            transform: translateX(-50%); 
+        }
+        
+        .computer-screen { 
+            border-radius: 10px; 
+            overflow: hidden; 
+            background: #000; 
+            display: flex; 
+            border: 1px solid #1e293b;
+        }
+        
+        .computer-screen img { 
+            width: 100%; 
+            height: auto; 
+            display: block; 
+        }
+        
+        .computer-stand { 
+            width: 100px; 
+            height: 40px; 
+            background: linear-gradient(to bottom, #334155, #1e293b); 
+            margin: 0 auto; 
+            border-radius: 0 0 8px 8px; 
+            border-left: 2px solid #475569;
+            border-right: 2px solid #475569;
+        }
+        
+        .computer-base { 
+            width: 180px; 
+            height: 12px; 
+            background: #475569; 
+            margin: 0 auto; 
+            border-radius: 6px 6px 0 0; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1200px) {
+            .cards-container { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .layout-grid { 
+                flex-direction: column; 
+            }
+            .left-panel { 
+                max-width: 100%; 
+                gap: 3rem;
+            }
+            .right-panel { 
+                width: 100%; 
+                position: static; 
+                max-width: 700px; 
+                margin: 0 auto; 
+            }
+            .cards-container { 
+                grid-template-columns: repeat(3, 1fr); 
+            }
+        }
+        
+        @media (max-width: 800px) {
+            .cards-container { 
+                grid-template-columns: 1fr; 
+            }
+            h1 { font-size: 2.8rem; }
+            .container { padding: 3rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="layout-grid">
+            
+            <div class="left-panel">
+                <div class="hero">
+                    <h1>Welcome to the <span class="gradient-text">next generation of app installs</span>.</h1>
+                    <p class="description">WinDepot is the fastest, smoothest, and easiest application installer. It allows you to download apps in seconds from the largest variety of applications - every app on the Microsoft store (excluding Xbox apps), plus Winget packages (basically every app on earth) is on AppDepot.</p>
+                    <a href="installation.html" class="btn">Install ⬇️</a>
+                </div>
+                
+                <div class="cards-container">
+                    <div class="card">
+                        <img src="/assets/ms.png" alt="MS Store Collection">
+                        <h3>Every. app. Ever.</h3>
+                        <p>The AppDepot store has some of the biggest variety of apps of all time. Excluding paid apps and apps on the Xbox store, every app on the Microsoft Store is available on AppDepot. WinGet packaged apps are also available on the WinDepot store - that's basically every app on earth that's packaged and not on the MS Store. That lets you install popular apps like Google Chrome, Discord, Spotify, Visual Studio code, and more.</p>
+                    </div>
+                    
+                    <div class="card">
+                        <img src="/assets/community.png" alt="Curated Collections">
+                        <h3>Curated collections and bulk downloads</h3>
+                        <p>With bulk downloads, you can search and add multiple apps to your bulk list. Then, with one button, every app on your bulk list will download at the same time. We also have curated collections, where you can view our community-created libraries of apps from popular categories like 'Development', 'Utilities', and 'Internet and browsing'. One click downloads them all with Bulk download. So on a fresh PC, you can get all of your go-to apps in seconds.</p>
+                    </div>
+                    
+                    <div class="card">
+                        <img src="/assets/gif.gif" alt="App Updating Loop">
+                        <h3>Keep every app updated</h3>
+                        <p>You can keep everything up-to-date, sure. But to do that, you manually have to open every app and sort through complicated context menus to get to the update button. Or - even worse - the time you opened an app in a hurry to see an 'Updating' progress bar, right when you need the app! With WinDepot, you can keep every single app updated in one menu. View your installed apps, uninstall them, or update every single app with one singular click. Isn't that easy!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="computer-frame">
+                    <div class="computer-screen">
+                        <img src="/assets/banner.png" alt="AppDepot UI Showcase">
+                    </div>
+                </div>
+                <div class="computer-stand"></div>
+                <div class="computer-base"></div>
+            </div>
+            
+        </div>
+    </div>
+</body>
+</html>
