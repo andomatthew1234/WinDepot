@@ -17,6 +17,7 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except Exception:
+        # Step up one directory level because this script lives in /app_collections
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
@@ -88,8 +89,8 @@ class CollectionsManager:
 
     # --- CLOUD FETCH ENGINE (PATH A) ---
     def fetch_cloud_collections(self):
-        # Update this URL to point to your actual GitHub RAW link once you upload it!
-        url = "https://raw.githubusercontent.com/andomatthew1234/windepot/main/collections.json"
+        # Targeting the exact new folder path on GitHub
+        url = "https://raw.githubusercontent.com/andomatthew1234/windepot/main/app_collections/collections.json"
         
         def worker():
             try:
@@ -105,6 +106,16 @@ class CollectionsManager:
         threading.Thread(target=worker, daemon=True).start()
 
     def get_fallback_data(self):
+        # First, attempt to read the local collections.json file as an offline bypass!
+        local_json_path = resource_path(os.path.join("app_collections", "collections.json"))
+        if os.path.exists(local_json_path):
+            try:
+                with open(local_json_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+                
+        # Ultimate Failsafe if the internet is down AND the file is deleted locally
         return {
             "🧑‍💻 Development Hub": {
                 "description": "Essential environments, runtimes, and version control tools for modern software development.",
@@ -119,13 +130,6 @@ class CollectionsManager:
                 "apps": [
                     {"name": "Google Chrome", "id": "Google.Chrome"},
                     {"name": "Thorium Browser", "id": "Alex313031.Thorium"}
-                ]
-            },
-            "🔨 Core Utilities": {
-                "description": "Powerful system modifications and essential lifestyle applications.",
-                "apps": [
-                    {"name": "Spotify", "id": "9NCBCSZSJRSB"},
-                    {"name": "PowerToys Preview", "id": "XP89DCGQ3K6VLD"}
                 ]
             }
         }
